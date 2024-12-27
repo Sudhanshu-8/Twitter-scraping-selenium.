@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Run Selenium Script</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        pre {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Click here to run the script and fetch the latest trending topics</h1>
+    <button onclick="runScript()">Click here to run the script</button>
+    <div id="results"></div>
+
+    <script>
+        function runScript() {
+            const resultsDiv = document.getElementById("results");
+            resultsDiv.innerHTML = "<p>Running script... Please wait.</p>";
+
+            fetch('/run_script', {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    resultsDiv.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
+                    return;
+                }
+
+                const dateTime = data.date_and_time;
+                const trends = [
+                    data.name_of_trend1,
+                    data.name_of_trend2,
+                    data.name_of_trend3,
+                    data.name_of_trend4,
+                    data.name_of_trend5
+                ];
+                const ipAddress = data.ip_address;
+                const uniqueId = data._id;
+
+                const resultHTML = `
+                    <p>These are the most happening topics as on <strong>${dateTime}</strong></p>
+                    <ul>
+                        <li><strong>Trend 1:</strong> ${trends[0] || "N/A"}</li>
+                        <li><strong>Trend 2:</strong> ${trends[1] || "N/A"}</li>
+                        <li><strong>Trend 3:</strong> ${trends[2] || "N/A"}</li>
+                        <li><strong>Trend 4:</strong> ${trends[3] || "N/A"}</li>
+                        <li><strong>Trend 5:</strong> ${trends[4] || "N/A"}</li>
+                    </ul>
+                    <p>The IP address used for this query was <strong>${ipAddress}</strong>.</p>
+                    <h3>Here’s a JSON extract of this record from the MongoDB:</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                    <button onclick="runScript()">Click here to run the query again</button>
+                `;
+                resultsDiv.innerHTML = resultHTML;
+            })
+            .catch(error => {
+                resultsDiv.innerHTML = `<p style="color:red;">Error: ${error}</p>`;
+            });
+        }
+    </script>
+</body>
+</html>
