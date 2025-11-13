@@ -1,0 +1,774 @@
+{% raw %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trending Topics Dashboard</title>
+
+    <!-- Modern minimalist styling -->
+    <style>
+      :root {
+        --bg: #050816;
+        --bg-card: #0f172a;
+        --accent: #6366f1;
+        --accent-soft: rgba(99, 102, 241, 0.15);
+        --accent-strong: rgba(129, 140, 248, 0.35);
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --danger: #f97373;
+        --border-subtle: rgba(148, 163, 184, 0.4);
+        --radius-lg: 18px;
+        --radius-full: 999px;
+        --shadow-soft: 0 22px 40px rgba(15, 23, 42, 0.75);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+          'Segoe UI', sans-serif;
+        background: radial-gradient(circle at top, #1e293b 0, #020617 55%, #000 100%);
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 16px;
+      }
+
+      #root {
+        width: 100%;
+        max-width: 960px;
+      }
+
+      /* Utility classes */
+      .glass-card {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.9));
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-subtle);
+        box-shadow: var(--shadow-soft);
+        padding: 24px;
+        backdrop-filter: blur(22px);
+      }
+
+      @media (min-width: 768px) {
+        .glass-card {
+          padding: 28px 32px;
+        }
+      }
+
+      .header {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      @media (min-width: 640px) {
+        .header {
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+        }
+      }
+
+      .title-block {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 12px 4px 4px;
+        border-radius: var(--radius-full);
+        background: radial-gradient(circle at top left, var(--accent-soft), transparent 70%);
+        border: 1px solid var(--accent-strong);
+        color: var(--accent);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 600;
+        width: fit-content;
+      }
+
+      .chip-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        background: radial-gradient(circle at 30% 30%, #a5b4fc, #4f46e5 60%, #1e293b 100%);
+        box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.45);
+      }
+
+      .title {
+        font-size: clamp(1.6rem, 2.4vw, 2rem);
+        font-weight: 650;
+        letter-spacing: -0.03em;
+      }
+
+      .subtitle {
+        font-size: 0.95rem;
+        color: var(--muted);
+        max-width: 480px;
+      }
+
+      .meta-bar {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        font-size: 0.8rem;
+        color: var(--muted);
+        justify-content: flex-start;
+      }
+
+      .meta-pill {
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        padding: 5px 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.6));
+      }
+
+      .meta-dot-live {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: #22c55e;
+        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.35);
+      }
+
+      .meta-dot-idle {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: #facc15;
+      }
+
+      .meta-dot-error {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: var(--danger);
+      }
+
+      .layout-main {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr);
+        gap: 16px;
+      }
+
+      @media (min-width: 900px) {
+        .layout-main {
+          grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+        }
+      }
+
+      .card-section {
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.9));
+        padding: 18px 18px 20px;
+      }
+
+      .card-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .card-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .pill-soft {
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        padding: 4px 9px;
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+
+      .primary-btn {
+        position: relative;
+        border: none;
+        outline: none;
+        border-radius: 999px;
+        padding: 10px 22px;
+        font-size: 0.92rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        color: #e5e7eb;
+        background: radial-gradient(circle at 0 0, #4f46e5, #1d4ed8 45%, #020617 100%);
+        box-shadow: 0 18px 35px rgba(37, 99, 235, 0.55);
+        transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+      }
+
+      .primary-btn[disabled] {
+        cursor: not-allowed;
+        opacity: 0.7;
+        box-shadow: none;
+      }
+
+      .primary-btn:hover:not([disabled]) {
+        transform: translateY(-1px) scale(1.01);
+        box-shadow: 0 22px 38px rgba(59, 130, 246, 0.7);
+      }
+
+      .primary-btn:active:not([disabled]) {
+        transform: translateY(0) scale(0.99);
+        box-shadow: 0 10px 16px rgba(37, 99, 235, 0.44);
+      }
+
+      .primary-btn-pill {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        background: radial-gradient(circle at 25% 25%, #facc15, #f97316 55%, #b91c1c 100%);
+        position: relative;
+        box-shadow: 0 0 0 6px rgba(248, 250, 252, 0.08);
+      }
+
+      .primary-btn-pill::after {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border-radius: inherit;
+        background: radial-gradient(circle, rgba(248, 250, 252, 0.65), transparent 60%);
+        opacity: 0.9;
+      }
+
+      .primary-btn-text {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        line-height: 1.2;
+      }
+
+      .primary-btn-main {
+        font-size: 0.84rem;
+      }
+
+      .primary-btn-sub {
+        font-size: 0.68rem;
+        color: rgba(226, 232, 240, 0.7);
+      }
+
+      .primary-btn-icon {
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        border: 1px solid rgba(226, 232, 240, 0.75);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+      }
+
+      .trend-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+        margin-top: 6px;
+      }
+
+      .trend-card {
+        border-radius: 12px;
+        padding: 12px 12px 11px;
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.38), rgba(15, 23, 42, 0.96));
+        position: relative;
+        overflow: hidden;
+      }
+
+      .trend-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at top left, rgba(129, 140, 248, 0.17), transparent 55%);
+        opacity: 0.95;
+        pointer-events: none;
+      }
+
+      .trend-rank {
+        position: relative;
+        z-index: 1;
+        font-size: 0.72rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: rgba(226, 232, 240, 0.7);
+        margin-bottom: 2px;
+      }
+
+      .trend-name {
+        position: relative;
+        z-index: 1;
+        font-weight: 600;
+        font-size: 0.95rem;
+        letter-spacing: -0.01em;
+        word-break: break-word;
+      }
+
+      .trend-badge-row {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 8px;
+        font-size: 0.72rem;
+        color: rgba(226, 232, 240, 0.8);
+      }
+
+      .trend-badge {
+        padding: 3px 7px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.6);
+        background: rgba(15, 23, 42, 0.6);
+      }
+
+      .trend-score-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: #22c55e;
+        margin-right: 4px;
+      }
+
+      .trend-empty {
+        border-style: dashed;
+        border-color: rgba(148, 163, 184, 0.6);
+        background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.9));
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-size: 0.8rem;
+        padding: 18px 12px;
+      }
+
+      .meta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+
+      .meta-item-label {
+        color: rgba(148, 163, 184, 0.85);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.72rem;
+        margin-bottom: 2px;
+      }
+
+      .meta-item-value {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+          'Courier New', monospace;
+        color: rgba(226, 232, 240, 0.92);
+      }
+
+      .json-viewer {
+        margin-top: 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.9));
+        padding: 10px 11px 11px;
+      }
+
+      .json-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+
+      .json-title {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: rgba(148, 163, 184, 0.95);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .json-badge {
+        border-radius: 999px;
+        padding: 2px 6px;
+        border: 1px solid rgba(148, 163, 184, 0.6);
+        font-size: 0.7rem;
+        color: rgba(148, 163, 184, 0.95);
+      }
+
+      .json-pre {
+        margin: 0;
+        max-height: 220px;
+        overflow: auto;
+        font-size: 0.77rem;
+        line-height: 1.55;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+          'Courier New', monospace;
+        color: #e5e7eb;
+        background: radial-gradient(circle at top left, #020617, #020617);
+        padding: 8px 9px;
+        border-radius: 9px;
+        border: 1px solid rgba(15, 23, 42, 0.95);
+      }
+
+      .status-banner {
+        margin-top: 10px;
+        border-radius: 12px;
+        padding: 8px 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.8rem;
+      }
+
+      .status-banner.info {
+        background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.18), rgba(15, 23, 42, 0.96));
+        border: 1px solid rgba(56, 189, 248, 0.6);
+        color: #e0f2fe;
+      }
+
+      .status-banner.error {
+        background: radial-gradient(circle at top left, rgba(248, 113, 113, 0.24), rgba(15, 23, 42, 0.96));
+        border: 1px solid rgba(248, 113, 113, 0.75);
+        color: #fee2e2;
+      }
+
+      .status-icon {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+      }
+
+      .status-icon.info {
+        border: 1px solid rgba(56, 189, 248, 0.8);
+      }
+
+      .status-icon.error {
+        border: 1px solid rgba(248, 113, 113, 0.9);
+      }
+
+      .status-text-main {
+        font-weight: 500;
+      }
+
+      .status-text-sub {
+        opacity: 0.9;
+      }
+
+      .spinner {
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        border: 2px solid rgba(226, 232, 240, 0.35);
+        border-top-color: #e5e7eb;
+        animation: spin 0.6s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+
+    <!-- React + ReactDOM + Babel from CDN so you don't need a build step -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!-- Our React application -->
+    <script type="text/babel">
+      const { useState, useMemo } = React;
+
+      function App() {
+        const [data, setData] = useState(null);
+        const [loading, setLoading] = useState(false);
+        const [error, setError] = useState(null);
+
+        const hasTrends = useMemo(() => {
+          if (!data) return false;
+          return (
+            data.name_of_trend1 ||
+            data.name_of_trend2 ||
+            data.name_of_trend3 ||
+            data.name_of_trend4 ||
+            data.name_of_trend5
+          );
+        }, [data]);
+
+        const statusLabel = useMemo(() => {
+          if (loading) return 'Running live Selenium session…';
+          if (error) return 'Last run failed';
+          if (data) return 'Latest snapshot ready';
+          return 'Awaiting first run';
+        }, [loading, error, data]);
+
+        const statusSubLabel = useMemo(() => {
+          if (loading)
+            return 'Browser automation is logging in to X and collecting your trending topics.';
+          if (error)
+            return 'View the error below, then try again. Check credentials / connectivity if it persists.';
+          if (data)
+            return 'Below is the snapshot stored in MongoDB for this execution.';
+          return 'Click the button on the right to trigger a new snapshot.';
+        }, [loading, error, data]);
+
+        const statusVariant = useMemo(() => {
+          if (error) return 'error';
+          return 'info';
+        }, [error]);
+
+        const statusDotClass = useMemo(() => {
+          if (loading) return 'meta-dot-live';
+          if (error) return 'meta-dot-error';
+          if (data) return 'meta-dot-live';
+          return 'meta-dot-idle';
+        }, [loading, error, data]);
+
+        async function handleRun() {
+          setLoading(true);
+          setError(null);
+
+          try {
+            const response = await fetch('/run_script', { method: 'POST' });
+
+            if (!response.ok) {
+              throw new Error(`Request failed with status ${response.status}`);
+            }
+
+            const json = await response.json();
+
+            if (json.error) {
+              setError(json.error);
+              setData(null);
+            } else {
+              setData(json);
+            }
+          } catch (err) {
+            console.error(err);
+            setError(err.message || 'Unexpected error');
+            setData(null);
+          } finally {
+            setLoading(false);
+          }
+        }
+
+        const trends = useMemo(() => {
+          if (!data) return [];
+          return [
+            data.name_of_trend1,
+            data.name_of_trend2,
+            data.name_of_trend3,
+            data.name_of_trend4,
+            data.name_of_trend5,
+          ];
+        }, [data]);
+
+        return (
+          <div className="glass-card">
+            {/* Header */}
+            <div className="header">
+              <div className="title-block">
+                <div className="chip">
+                  <span className="chip-dot" />
+                  <span>Twitter (X) Trend Watch</span>
+                </div>
+                <h1 className="title">Live trending topics dashboard</h1>
+                <p className="subtitle">
+                  Trigger a live Selenium run against X (Twitter) and instantly visualize whats
+                  trending right now. Each execution is stored in MongoDB with metadata.
+                </p>
+              </div>
+
+              <div className="meta-bar">
+                <div className="meta-pill">
+                  <span className={statusDotClass} />
+                  <span>{statusLabel}</span>
+                </div>
+                <div className="meta-pill">Flask API  b7 Selenium Firefox</div>
+                <div className="meta-pill">MongoDB persistence</div>
+              </div>
+            </div>
+
+            {/* Main layout */}
+            <div className="layout-main">
+              {/* Left: trigger + trends */}
+              <section className="card-section">
+                <div className="card-header-row">
+                  <div>
+                    <div className="card-title">Snapshot runner</div>
+                    <div className="pill-soft">Runs a fresh browser automation session</div>
+                  </div>
+
+                  <button
+                    className="primary-btn"
+                    onClick={handleRun}
+                    disabled={loading}
+                  >
+                    <span className="primary-btn-pill" />
+                    <span className="primary-btn-text">
+                      <span className="primary-btn-main">
+                        {loading ? 'Running now a0...' : data ? 'Run again' : 'Run first snapshot'}
+                      </span>
+                      <span className="primary-btn-sub">
+                        Selenium + X.com  b7 persists to MongoDB
+                      </span>
+                    </span>
+                    <span className="primary-btn-icon">
+                      {loading ? <span className="spinner" /> : ' bb'}
+                    </span>
+                  </button>
+                </div>
+
+                <div className="status-banner ${statusVariant}">
+                  <div className={`status-icon ${statusVariant}`}>
+                    {statusVariant === 'error' ? '!' : 'i'}
+                  </div>
+                  <div>
+                    <div className="status-text-main">{statusLabel}</div>
+                    <div className="status-text-sub">{statusSubLabel}</div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 14 }}>
+                  <div className="card-title" style={{ marginBottom: 6 }}>
+                    Top 5 trending topics
+                  </div>
+                  <div className="trend-list">
+                    {hasTrends ? (
+                      trends.map((trend, index) => (
+                        <div key={index} className="trend-card">
+                          <div className="trend-rank">
+                            Trend #{index + 1}
+                          </div>
+                          <div className="trend-name">{trend || 'N/A'}</div>
+                          <div className="trend-badge-row">
+                            <div className="trend-badge">
+                              <span className="trend-score-dot" />
+                              Live snapshot
+                            </div>
+                            <span style={{ opacity: 0.8 }}>#{index + 1}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="trend-empty">
+                        Hit  abRun snapshot bb to fetch the latest trending topics from X.com.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              {/* Right: metadata + raw JSON */}
+              <section className="card-section">
+                <div className="card-header-row">
+                  <div>
+                    <div className="card-title">Execution metadata</div>
+                    <div className="pill-soft">Details persisted in MongoDB</div>
+                  </div>
+                </div>
+
+                {data ? (
+                  <>
+                    <div className="meta-grid">
+                      <div>
+                        <div className="meta-item-label">Timestamp</div>
+                        <div className="meta-item-value">{data.date_and_time}</div>
+                      </div>
+                      <div>
+                        <div className="meta-item-label">Client IP</div>
+                        <div className="meta-item-value">{data.ip_address}</div>
+                      </div>
+                      <div>
+                        <div className="meta-item-label">Document ID</div>
+                        <div className="meta-item-value">{data._id}</div>
+                      </div>
+                    </div>
+
+                    <div className="json-viewer">
+                      <div className="json-header-row">
+                        <div className="json-title">
+                          <span>{'{'}JSON{'}'}</span>
+                          <span style={{ opacity: 0.7 }}>MongoDB record</span>
+                        </div>
+                        <span className="json-badge">
+                          Read-only snapshot
+                        </span>
+                      </div>
+                      <pre className="json-pre">
+                        {JSON.stringify(data, null, 2)}
+                      </pre>
+                    </div>
+                  </>
+                ) : (
+                  <div className="json-viewer">
+                    <div className="json-header-row">
+                      <div className="json-title">
+                        <span>{'{'}JSON{'}'}</span>
+                        <span style={{ opacity: 0.7 }}>Awaiting first run</span>
+                      </div>
+                      <span className="json-badge">No document loaded</span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--muted)' }}>
+                      Once you run the snapshot, the full MongoDB document for this execution will
+                      appear here in a formatted JSON view.
+                    </p>
+                  </div>
+                )}
+
+                {error && (
+                  <div className="status-banner error" style={{ marginTop: 12 }}>
+                    <div className="status-icon error">!</div>
+                    <div>
+                      <div className="status-text-main">Backend error</div>
+                      <div className="status-text-sub">{error}</div>
+                    </div>
+                  </div>
+                )}
+              </section>
+            </div>
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
+{% endraw %}
